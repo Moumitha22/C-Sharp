@@ -7,16 +7,19 @@ namespace Task01
         static void Main(string[] args)
         {
             Console.Write("Enter a positive number : ");
-            int num = Convert.ToInt32(Console.ReadLine());
+            // int num = Convert.ToInt32(Console.ReadLine());  // This throws an exception if the input is not a valid integer
 
-            if (num >= 0)
+            string? input = Console.ReadLine();
+
+            Console.WriteLine("");
+            if (int.TryParse(input, out int num) && num >= 0)
             {
                 Console.WriteLine($"Factorial of {num} using loop: {FactorialByLoop(num)}");
                 Console.WriteLine($"Factorial of {num} using recursion: {FactorialByRecursion(num)}");
             }
             else
             {
-                Console.WriteLine("Enter a positive number.");
+                Console.WriteLine("Invalid input. Please enter a positive integer.");
             }
         }
 
