@@ -2,135 +2,147 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Task_08
+public interface IEntity
 {
-    // 1. IEntity Interface
-    public interface IEntity
+    int Id { get; set; }
+}
+
+public class Product : IEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int Price { get; set; }
+}
+
+
+public interface IRepository<T> where T : class, IEntity
+{
+    IEnumerable<T> GetAll();
+    T Get(int id);
+    void Add(T item);
+    void Update(T item);
+    void Delete(int id);
+}
+
+public class Repository<T> : IRepository<T> where T : class, IEntity
+{
+    private readonly Dictionary<int, T> _storage = new();
+    private int _nextId = 1;
+
+    public IEnumerable<T> GetAll() => _storage.Values;
+
+    public T Get(int id) => _storage.TryGetValue(id, out var item) ? item : null;
+
+    public void Add(T item)
     {
-        int Id { get; set; }
+        item.Id = _nextId++;
+        _storage[item.Id] = item;
+        Console.WriteLine($"{typeof(T).Name} added with ID: {item.Id}");
     }
 
-    // 2. Generic Repository Interface
-    public interface IRepository<T> where T : IEntity
+    public void Update(T item)
     {
-        void Add(T item);
-        IEnumerable<T> GetAll();
-        T GetById(int id);
-        void Update(T item);
-        void Delete(int id);
-    }
-
-    // 3. In-Memory Repository Implementation
-    public class InMemoryRepository<T> : IRepository<T> where T : IEntity
-    {
-        private readonly List<T> _items = new List<T>();
-
-        public void Add(T item) => _items.Add(item);
-
-        public IEnumerable<T> GetAll() => _items;
-
-        public T GetById(int id) => _items.FirstOrDefault(x => x.Id == id);
-
-        public void Update(T item)
+        if (_storage.ContainsKey(item.Id))
         {
-            var index = _items.FindIndex(x => x.Id == item.Id);
-            if (index != -1)
-                _items[index] = item;
+            _storage[item.Id] = item;
+            Console.WriteLine($"{typeof(T).Name} updated.");
         }
-
-        public void Delete(int id)
+        else
         {
-            var item = GetById(id);
-            if (item != null)
-                _items.Remove(item);
+            Console.WriteLine($"{typeof(T).Name} not found.");
         }
     }
 
-    // 4. Product Class (Sample Entity)
-    public class Product : IEntity
+    public void Delete(int id)
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public double Price { get; set; }
-    }
-
-    // 5. Program with Console UI
-    class Program
-    {
-        static void Main()
+        if (_storage.Remove(id))
         {
-            IRepository<Product> repository = new InMemoryRepository<Product>();
+            Console.WriteLine($"{typeof(T).Name} deleted.");
+        }
+        else
+        {
+            Console.WriteLine($"{typeof(T).Name} not found.");
+        }
+    }
+}
 
-            while (true)
+public class Program
+{
+    public static void Main()
+    {
+        IRepository<Product> productRepo = new Repository<Product>();
+        bool exit = false;
+
+        while (!exit)
+        {
+            Console.WriteLine("\nMenu:\n1. Add Product\n2. Get Product\n3. Update Product\n4. Delete Product\n5. List All Products\n6. Exit");
+            Console.Write("\nChoose option: ");
+            string input = Console.ReadLine();
+
+            switch (input)
             {
-                Console.WriteLine("\n===== Product Repository Menu =====");
-                Console.WriteLine("1. Add Product");
-                Console.WriteLine("2. View All Products");
-                Console.WriteLine("3. Get Product by ID");
-                Console.WriteLine("4. Update Product");
-                Console.WriteLine("5. Delete Product");
-                Console.WriteLine("6. Exit");
-                Console.Write("Choose an option: ");
-                var input = Console.ReadLine();
+                case "1":
+                    var newProduct = new Product();
+                    Console.Write("\nEnter product name: ");
+                    newProduct.Name = Console.ReadLine();
+                    Console.Write("Enter price: ");
+                    newProduct.Price = int.Parse(Console.ReadLine());
+                    productRepo.Add(newProduct);
+                    break;
 
-                switch (input)
-                {
-                    case "1":
-                        var p = new Product();
-                        Console.Write("Enter Product ID: ");
-                        p.Id = int.Parse(Console.ReadLine());
-                        Console.Write("Enter Product Name: ");
-                        p.Name = Console.ReadLine();
-                        Console.Write("Enter Product Price: ");
-                        p.Price = double.Parse(Console.ReadLine());
-                        repository.Add(p);
-                        Console.WriteLine("Product added.");
-                        break;
+                case "2":
+                    Console.Write("\nEnter Product ID: ");
+                    int idToGet = int.Parse(Console.ReadLine());
+                    var found = productRepo.Get(idToGet);
+                    if (found != null)
+                        Console.WriteLine($"\nID: {found.Id}, Name: {found.Name}, Price: {found.Price}");
+                    else
+                        Console.WriteLine("\nProduct not found.");
+                    break;
 
-                    case "2":
-                        var allProducts = repository.GetAll();
-                        Console.WriteLine("\n--- All Products ---");
-                        foreach (var prod in allProducts)
-                            Console.WriteLine($"ID: {prod.Id}, Name: {prod.Name}, Price: ₹{prod.Price}");
-                        break;
+                case "3":
+                    Console.Write("\nEnter ID to update: ");
+                    int idToUpdate = int.Parse(Console.ReadLine());
+                    var productToUpdate = productRepo.Get(idToUpdate);
+                    if (productToUpdate != null)
+                    {
+                        Console.Write("\nNew name: ");
+                        productToUpdate.Name = Console.ReadLine();
+                        Console.Write("New price: ");
+                        productToUpdate.Price = int.Parse(Console.ReadLine());
+                        productRepo.Update(productToUpdate);
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nProduct not found.");
+                    }
+                    break;
 
-                    case "3":
-                        Console.Write("Enter Product ID to find: ");
-                        int findId = int.Parse(Console.ReadLine());
-                        var found = repository.GetById(findId);
-                        if (found != null)
-                            Console.WriteLine($"Found: ID: {found.Id}, Name: {found.Name}, Price: ₹{found.Price}");
-                        else
-                            Console.WriteLine("Product not found.");
-                        break;
+                case "4":
+                    Console.Write("\nEnter ID to delete: ");
+                    int idToDelete = int.Parse(Console.ReadLine());
+                    productRepo.Delete(idToDelete);
+                    break;
 
-                    case "4":
-                        var update = new Product();
-                        Console.Write("Enter Product ID to update: ");
-                        update.Id = int.Parse(Console.ReadLine());
-                        Console.Write("Enter new Name: ");
-                        update.Name = Console.ReadLine();
-                        Console.Write("Enter new Price: ");
-                        update.Price = double.Parse(Console.ReadLine());
-                        repository.Update(update);
-                        Console.WriteLine("Product updated.");
-                        break;
+                case "5":
+                    var products = productRepo.GetAll();
+                    if (!products.Any())
+                        Console.WriteLine("\nNo products found.");
+                    else
+                    {
+                        Console.WriteLine("\n------Products------");
+                        foreach (var p in products)
+                            Console.WriteLine($"ID: {p.Id}, Name: {p.Name}, Price: {p.Price}");
+                    }
+                    break;
 
-                    case "5":
-                        Console.Write("Enter Product ID to delete: ");
-                        int deleteId = int.Parse(Console.ReadLine());
-                        repository.Delete(deleteId);
-                        Console.WriteLine("Product deleted (if it existed).");
-                        break;
+                case "6":
+                    exit = true;
+                    break;
 
-                    case "6":
-                        Console.WriteLine("Exiting...");
-                        return;
-
-                    default:
-                        Console.WriteLine("Invalid option. Try again.");
-                        break;
-                }
+                default:
+                    Console.WriteLine("\nInvalid option. Try again.");
+                    break;
             }
         }
     }
