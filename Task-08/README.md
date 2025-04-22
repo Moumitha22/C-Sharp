@@ -1,106 +1,66 @@
 # **Task 8: Generics and Interfaces with a Repository Pattern**
 
 ## **Objective:**
-
-Build a **generic in-memory repository** using C# that performs basic **CRUD operations**, demonstrating how to work with **interfaces, generics**, and **type constraints** effectively. The application includes a simple **console-based UI** for interacting with a sample entity (`Product`).
-
----
+- Implement a generic in-memory repository to perform CRUD operations.
 
 ## **Requirements:**
+- Define an interface (e.g., `IRepository<T>`) with methods like `Add`, `Get`, `Update`, and `Delete`.
+- Create a generic class that implements this interface.
+- Use type constraints if necessary (e.g., where `T : class` or implementing a specific interface).
+- Write a simple console UI to demonstrate the repository with a sample entity (e.g., `Product` or `Student`).
 
-- Define an `IRepository<T>` interface for CRUD operations.
-- Implement a **generic repository class** with in-memory storage.
-- Use **type constraints** to enforce structure (`where T : class, IEntity`).
-- Create a sample entity class (`Product`) that implements `IEntity`.
-- Implement a **console menu** for user interaction.
+## **Concepts Used:**
 
----
+### C# Generics
+- Used **generics** to write reusable, type-safe code
+- Allowed `Repository<T>` to work with any class implementing `IEntity`
 
-## **Key Components:**
+### Interface Design
+- Defined a **generic interface `IRepository<T>`**
+  - Standard method signatures: `Add`, `Get`, `Update`, `Delete`, `GetAll`
+- Implemented the interface in a class, keeping logic modular and testable
 
-### `IEntity` Interface
-- Defines the required `Id` property for all entities.
+### Repository Pattern
+- Separated **data access logic** from business logic using the **repository pattern**
+- Promoted **clean architecture** by abstracting CRUD operations
 
-```csharp
-public interface IEntity
-{
-    int Id { get; set; }
-}
-```
-### `Product` Class
-- Sample entity to demonstrate CRUD operations.
+### In-Memory Data Handling
+- Used **`Dictionary<int, T>`** to simulate a database
+- Eliminated the need for external storage — everything runs in memory
 
-```csharp
-public class Product : IEntity
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public int Price { get; set; }
-}
-```
 
-### `IRepository<T>` Interface
+## **Implementation:**
 
-- Generic interface defining CRUD operations.
+### 1. Created a Generic Interface (`IRepository<T>`)
+- Defined operations like `Add`, `Get`, `Update`, `Delete`, and `GetAll`
 
-```csharp
-public interface IRepository<T> where T : class, IEntity
-{
-    IEnumerable<T> GetAll();
-    T Get(int id);
-    void Add(T item);
-    void Update(T item);
-    void Delete(int id);
-}
-```
+### 2. Implemented the Interface with a Generic Class (`Repository<T>`)
+- Used `Dictionary<int, T>` for in-memory storage
+- Applied a type constraint: `where T : class, IEntity`
+- Auto-generated IDs using a private counter
 
-### `Repository<T>` Class
+### 3. Used a Sample Entity (`Product`)
+- Created a `Product` class with properties: `Id`, `Name`, `Price`
+- Implemented the `IEntity` interface to ensure consistency
 
-- In-memory implementation of the IRepository<T> interface.
-
-```csharp
-public class Repository<T> : IRepository<T> where T : class, IEntity
-{
-    private readonly Dictionary<int, T> _storage = new();
-    private int _nextId = 1;
-
-    public IEnumerable<T> GetAll() => _storage.Values;
-
-    public T Get(int id) => _storage.TryGetValue(id, out var item) ? item : null;
-
-    public void Add(T item)
-    {
-        item.Id = _nextId++;
-        _storage[item.Id] = item;
-        Console.WriteLine($"{typeof(T).Name} added with ID: {item.Id}");
-    }
-
-    public void Update(T item)
-    {
-        if (_storage.ContainsKey(item.Id))
-        {
-            _storage[item.Id] = item;
-            Console.WriteLine($"{typeof(T).Name} updated.");
-        }
-        else
-        {
-            Console.WriteLine($"{typeof(T).Name} not found.");
-        }
-    }
-
-    public void Delete(int id)
-    {
-        if (_storage.Remove(id))
-        {
-            Console.WriteLine($"{typeof(T).Name} deleted.");
-        }
-        else
-        {
-            Console.WriteLine($"{typeof(T).Name} not found.");
-        }
-    }
-}
-```
+## **Features:**
+- Console-based interactive menu for CRUD operations
+- Reusable for any entity implementing `IEntity`
+- No external dependencies or database setup needed
+- Clear output messages for each operation (e.g., added, updated, deleted)
+- Extensible: Easily adaptable for other types like `Student`, `Customer`, etc.
 
 
 ## **Sample Output:**
+
+### 1. Add
+![ADD](./outputs/add.png)
+
+### 2. Get and GetAll
+![GET](./outputs/get.png)
+
+### 3. Delete
+![DELETE](./outputs/delete.png)
+
+### 4. Update
+![UPDATE](./outputs/update.png)
